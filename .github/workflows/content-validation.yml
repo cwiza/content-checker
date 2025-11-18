@@ -29,28 +29,27 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build validator
-        run: npm run compile
-
       - name: Run content validation
         id: validate
+        continue-on-error: true
         run: node .github/scripts/validate-pr.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Comment on PR
-        if: steps.validate.outputs.has_issues == 'true'
+        if: hashFiles('validation-report.md') != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync('validation-report.md')) {
+              console.log('No validation report found');
+              return;
+            }
             const report = fs.readFileSync('validation-report.md', 'utf8');
             
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -58,34 +57,68 @@ jobs:
             });
 
       - name: Create issues for errors
-        if: steps.validate.outputs.has_critical == 'true'
+        if: hashFiles('validation-issues.json') != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const issues = JSON.parse(fs.readFileSync('validation-issues.json', 'utf8'));
+            if (!fs.existsSync('validation-issues.json')) {
+              console.log('No issues file found');
+              return;
+            }
+            const allIssues = JSON.parse(fs.readFileSync('validation-issues.json', 'utf8'));
             
-            for (const issue of issues) {
-              if (issue.severity === 'critical' || issue.severity === 'high') {
-                await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: `[Content] ${issue.type}: ${issue.file}`,
-                  body: `## Content Validation Issue\n\n` +
-                        `**File:** ${issue.file}\n` +
-                        `**Line:** ${issue.line}\n` +
-                        `**Severity:** ${issue.severity.toUpperCase()}\n` +
-                        `**Type:** ${issue.type}\n\n` +
-                        `### Message\n${issue.message}\n\n` +
-                        (issue.suggestion ? `### Suggestion\n${issue.suggestion}\n\n` : '') +
-                        `**Related PR:** #${context.issue.number}`,
-                  labels: ['content-validation', `severity-${issue.severity}`, issue.type]
-                });
+            // Filter for critical/high severity
+            const criticalIssues = allIssues.filter(i => i.severity === 'critical' || i.severity === 'high');
+            
+            // Group by file
+            const byFile = criticalIssues.reduce((acc, issue) => {
+              if (!acc[issue.file]) {
+                acc[issue.file] = [];
               }
+              acc[issue.file].push(issue);
+              return acc;
+            }, {});
+            
+            // Create one issue per file
+            for (const [file, fileIssues] of Object.entries(byFile)) {
+              const severityEmojis = { critical: '🔴', high: '🟡', medium: '🔵', low: '🟠' };
+              
+              let body = `## Content Validation Issues in \`${file}\`\n\n`;
+              body += `**PR:** #${context.issue.number}\n`;
+              body += `**Total Issues:** ${fileIssues.length}\n\n`;
+              
+              // Group by severity
+              const bySeverity = fileIssues.reduce((acc, issue) => {
+                if (!acc[issue.severity]) acc[issue.severity] = [];
+                acc[issue.severity].push(issue);
+                return acc;
+              }, {});
+              
+              for (const severity of ['critical', 'high']) {
+                if (bySeverity[severity]?.length > 0) {
+                  body += `### ${severityEmojis[severity]} ${severity.toUpperCase()} (${bySeverity[severity].length})\n\n`;
+                  bySeverity[severity].forEach(issue => {
+                    body += `- **Line ${issue.line}** - ${issue.message}\n`;
+                    if (issue.suggestion) {
+                      body += `  - 💡 _${issue.suggestion}_\n`;
+                    }
+                  });
+                  body += '\n';
+                }
+              }
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[Content Validation] ${file}`,
+                body: body,
+                labels: ['content-validation', 'PR-' + context.issue.number]
+              });
             }
 
       - name: Fail on critical issues
-        if: steps.validate.outputs.has_critical == 'true'
+        if: steps.validate.outcome == 'failure'
         run: |
           echo "Critical content issues found. Please fix before merging."
           exit 1
