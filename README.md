@@ -1,220 +1,255 @@
-# Content Checker - VS Code Extension
+# Content Checker
 
-A powerful VS Code extension for automated content validation in Pull Requests. It detects spelling errors, grammar issues, inappropriate content, and can automatically fix many common problems.
+Automated content validation for GitHub Pull Requests. Automatically detects spelling errors, grammar mistakes, honorifics, placeholder text, and other content issues - then creates GitHub issues so your team can fix them.
 
-## Features
+## 🎯 What It Does
 
-### 🔍 Comprehensive Content Validation
-- **Spelling Check** - Detects common misspellings with suggestions
-- **Grammar Check** - Identifies grammar mistakes (your/you're, could of/could have, etc.)
-- **Honorifics Detection** - Flags titles like Mr., Mrs., Dr. for inclusive content
-- **Placeholder Detection** - Finds lorem ipsum, TODO, TBD, and other placeholder text
-- **Long Button Text** - Ensures UI button text stays concise (≤3 words)
-- **Plural Consistency** - Detects inconsistent singular/plural usage
-- **Capitalization** - Checks proper sentence capitalization
-- **Inappropriate Content** - Filters unprofessional language
+Every time someone opens or updates a PR, Content Checker automatically:
 
-### 🤖 Automatic Fixes
-- Auto-correct spelling errors
-- Fix grammar mistakes
-- Remove honorifics
-- Capitalize sentences properly
-- Interactive fix mode with preview
+1. ✅ **Validates all changed content files** (.md, .txt, .json, .yml)
+2. ✅ **Posts a comment** on the PR with all issues found
+3. ✅ **Creates GitHub issues** - one per file with problems (grouped by file)
+4. ✅ **Blocks merging** if critical issues are found
+5. ✅ **Saves time** - no manual content review needed
 
-### 📝 GitHub Integration
-- Validate entire Pull Requests
-- Create inline PR review comments
-- Generate GitHub issues for critical problems
-- Apply fixes directly to PR branches
-- Batch processing of changed files
+## 🔍 What It Detects
 
-## Installation
+### Critical Issues 🔴
+- **Honorifics** - Mr., Mrs., Dr., Prof. (for inclusive content)
 
-1. Clone this repository
-2. Run `npm install`
-3. Press `F5` to launch the extension in debug mode
-4. Configure GitHub settings
+### High Severity 🟡
+- **Spelling errors** - receive, definitely, accommodate, government, etc.
+- **Placeholder text** - TODO, FIXME, lorem ipsum, [brackets], {{templates}}
 
-## Setup
+### Medium Severity 🔵
+- **Grammar mistakes** - could of → could have, your/you're confusion
 
-### GitHub Personal Access Token
+### Low Severity 🟠
+- **Capitalization** - sentences starting with lowercase
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate a new token with these scopes:
-   - `repo` (full control)
-   - `read:org` (optional, for organization repos)
-3. Copy the token (starts with `ghp_`)
+## 🚀 Quick Start
 
-### Configure Extension
+### 1. Add to Your Repository
 
-1. Open Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux)
-2. Run: `Content Checker: Configure GitHub Settings`
-3. Enter:
-   - GitHub Personal Access Token
-   - Repository Owner (e.g., `microsoft`)
-   - Repository Name (e.g., `vscode`)
+Copy the `.github/` folder to your repository:
 
-Settings are saved to your workspace configuration.
+```bash
+git clone https://github.com/cwiza/content-checker.git
+cp -r content-checker/.github your-repo/.github
+cd your-repo
+git add .github/
+git commit -m "Add content validation"
+git push
+```
 
-## Usage
+### 2. That's It!
 
-### Validate a Pull Request
+The workflow is now active. Create a PR and watch it work automatically.
 
-1. Open Command Palette
-2. Run: `Content Checker: Validate Pull Request`
-3. Enter PR number (e.g., `123`)
-4. Choose options:
-   - Create PR comments? (Yes/No)
-   - Create GitHub issues? (Yes/No)
+## 📊 Example Output
 
-### Validate and Auto-fix a PR
+When you create a PR, you'll see:
 
-1. Open Command Palette
-2. Run: `Content Checker: Validate and Auto-fix Pull Request`
-3. Enter PR number
-4. Extension will automatically:
-   - Detect all issues
-   - Apply fixes for auto-fixable issues
-   - Commit changes to the PR branch
-   - Create comments for remaining issues
+### PR Comment
+```markdown
+🔍 Content Validation Report
 
-### Validate Current File
+Total Issues: 14
 
-1. Open any text file in VS Code
-2. Open Command Palette
-3. Run: `Content Checker: Validate Current File`
-4. View results in the Output panel
+🔴 CRITICAL (3)
+- test-content.md:3 - Honorific detected: Mr.
+  💡 Use first name or full name without honorific
 
-### Preview Auto-fixes
+🟡 HIGH (11)
+- test-content.md:3 - Possible spelling error: "recieve"
+  💡 Did you mean "receive"?
+- test-content.md:5 - Placeholder text detected: TODO
+  💡 Replace with actual content
+```
 
-1. Open a file with content issues
-2. Run: `Content Checker: Preview Auto-fixes`
-3. See original vs. fixed text in the Output panel
+### GitHub Issue Created
+**Title:** `[Content Validation] test-content.md`
 
-## Extension Settings
+**Body:** Lists all critical/high severity issues in that file with line numbers and suggestions
 
-This extension contributes the following settings:
+### CI Check Status
+❌ **Content Validation** - Failed (blocks merging until issues are fixed)
 
-* `contentChecker.githubToken`: GitHub Personal Access Token for API access
-* `contentChecker.githubOwner`: GitHub repository owner/organization
-* `contentChecker.githubRepo`: GitHub repository name
-* `contentChecker.customDictionary`: Custom words to ignore in spell checking
-* `contentChecker.autoFixOnSave`: Automatically fix content issues on save
-* `contentChecker.enabledRules`: List of enabled validation rules
+## 🎛️ How It Works
 
-### Example Configuration
+### Automatic Validation
+- Triggers on: `pull_request` (opened, synchronize, reopened)
+- Validates: Files matching `**.md`, `**.txt`, `**.json`, `**.yml`, `**.yaml`
+- Runtime: ~5-10 seconds
 
-```json
+### Issue Creation
+- Creates **one issue per file** with problems
+- Groups all problems in that file together
+- Labels: `content-validation`, `PR-{number}`
+- Only creates issues for critical/high severity problems
+
+### PR Blocking
+- Critical issues = Check fails, PR blocked
+- Fix issues → check passes → PR can merge
+
+## ⚙️ Configuration
+
+### Customize Rules
+
+Edit `.github/scripts/validate-file.js` to:
+
+**Add more spelling words:**
+```javascript
+const commonMisspellings = {
+    'teh': 'the',
+    'recieve': 'receive',
+    'your-word': 'correction',  // Add here
+    // ...
+};
+```
+
+**Change severity levels:**
+```javascript
 {
-  "contentChecker.githubToken": "ghp_your_token_here",
-  "contentChecker.githubOwner": "your-org",
-  "contentChecker.githubRepo": "your-repo",
-  "contentChecker.customDictionary": ["API", "GitHub", "TypeScript"],
-  "contentChecker.autoFixOnSave": false,
-  "contentChecker.enabledRules": [
-    "spelling",
-    "honorifics",
-    "placeholder",
-    "grammar",
-    "capitalization"
-  ]
+    name: 'Spelling Check',
+    type: 'spelling',
+    severity: 'high',  // Change to: critical, high, medium, low
+    check: (text, ctx) => this.checkSpelling(text, ctx)
 }
 ```
 
-## Validation Rules
-
-### Severity Levels
-
-- 🔴 **Critical** - Must be fixed (honorifics, inappropriate content)
-- 🟡 **High** - Should be fixed (spelling, placeholder text)
-- 🔵 **Medium** - Consider fixing (long button text, grammar)
-- 🟠 **Low** - Nice to fix (capitalization, plural consistency)
-
-### Rule Types
-
-| Rule | Auto-fixable | Description |
-|------|-------------|-------------|
-| Spelling | ✅ Yes | Common misspellings |
-| Honorifics | ✅ Yes | Mr., Mrs., Dr., etc. |
-| Placeholder | ❌ No | Lorem ipsum, TODO, TBD |
-| Long Text | ❌ No | Button text > 3 words |
-| Plural Consistency | ❌ No | Inconsistent singular/plural |
-| Capitalization | ✅ Yes | Sentence capitalization |
-| Grammar | ✅ Yes | Common grammar mistakes |
-| Inappropriate | ❌ No | Unprofessional language |
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `Content Checker: Validate Pull Request` | Analyze PR content and create comments |
-| `Content Checker: Validate and Auto-fix Pull Request` | Analyze and auto-fix PR content |
-| `Content Checker: Validate Current File` | Check active file for issues |
-| `Content Checker: Preview Auto-fixes` | Preview fixes without applying |
-| `Content Checker: Configure GitHub Settings` | Set up GitHub credentials |
-
-## Architecture
-
-```
-content-checker/
-├── src/
-│   ├── extension.ts              # Main extension entry point
-│   ├── github/
-│   │   ├── githubApi.ts         # GitHub API client
-│   │   └── prAnalyzer.ts        # PR analysis orchestrator
-│   ├── validation/
-│   │   └── contentValidator.ts  # Content validation rules
-│   └── agents/
-│       └── autoFixAgent.ts      # Auto-fix strategies
-├── package.json                  # Extension manifest
-└── README.md                     # This file
+**Add custom validation rules:**
+```javascript
+{
+    name: 'My Custom Rule',
+    type: 'custom',
+    severity: 'medium',
+    check: (text, ctx) => {
+        const results = [];
+        if (text.includes('forbidden-word')) {
+            results.push({
+                message: 'Found forbidden word',
+                suggestion: 'Use alternative',
+                line: ctx.lineNumber
+            });
+        }
+        return results;
+    }
+}
 ```
 
-## Inspired By
+### Change File Types
 
-This extension was inspired by [figma-content-scraper](https://github.com/cwiza/figma-content-scraper) and follows similar patterns for content analysis and validation.
+Edit `.github/workflows/content-validation.yml`:
 
-## Security
+```yaml
+paths:
+  - '**.md'
+  - '**.txt'
+  - '**.rst'   # Add more extensions
+```
 
-- Never commit `.env` files or tokens
-- Store GitHub token in VS Code settings (encrypted)
-- Use fine-grained personal access tokens with minimal scopes
-- Rotate tokens regularly
+### Disable Issue Creation
 
-## Release Notes
+Remove or comment out the "Create issues for errors" step in `.github/workflows/content-validation.yml`
 
-### 0.0.1
+## 📦 What's Included
 
-Initial release with:
-- Content validation for PRs
-- Auto-fix capabilities
-- GitHub integration
-- Multiple validation rules
+```
+.github/
+├── workflows/
+│   ├── content-validation.yml    # Main workflow
+│   ├── content-audit.yml          # Weekly audit (optional)
+│   └── auto-fix.yml               # Auto-fix trigger (optional)
+└── scripts/
+    ├── validate-pr.js             # PR validation orchestrator
+    ├── validate-file.js           # Single file validator
+    └── auto-fix.js                # Auto-fix script (optional)
+```
 
-## Contributing
+## 🛠️ Optional Features
 
-Issues and pull requests welcome! This tool is useful for:
-- Content writers and editors
-- UX writers auditing consistency
-- Development teams ensuring quality
-- Accessibility teams checking clarity
-- Localization teams preparing translations
+### Pre-commit Hook (Local Validation)
 
-## Roadmap
+Add to `.git/hooks/pre-commit`:
 
-- [ ] Azure OpenAI integration for advanced content analysis
-- [ ] Custom rule creation UI
-- [ ] Bulk PR validation
-- [ ] Integration with CI/CD pipelines
-- [ ] Support for more file types
-- [ ] Advanced grammar checking with LLMs
-- [ ] Content style guide enforcement
-- [ ] Terminology consistency checking
+```bash
+#!/bin/sh
+echo "Running content validation..."
+node .github/scripts/validate-pr.js || exit 1
+```
 
-## License
+Make executable: `chmod +x .git/hooks/pre-commit`
+
+### Auto-Fix Workflow
+
+Comment `/fix-content` on any content validation issue to automatically apply spelling/grammar fixes.
+
+Requires: `.github/workflows/auto-fix.yml` (included)
+
+### VS Code Extension
+
+For manual validation while editing:
+
+1. Install from VSIX: `content-checker-0.0.1.vsix`
+2. Run command: `Content Checker: Validate Current File`
+3. View results in Output panel
+
+### Weekly Content Audit
+
+Automatically scans all content files weekly:
+
+- Enabled by: `.github/workflows/content-audit.yml`
+- Schedule: Every Monday at 9am UTC
+- Creates summary issue with all problems
+
+## 🎯 Use Cases
+
+Perfect for:
+
+- ✅ **Documentation teams** - Ensure quality across docs
+- ✅ **Open source projects** - Maintain consistent content standards
+- ✅ **UX writers** - Catch common writing mistakes
+- ✅ **Marketing content** - Prevent embarrassing typos
+- ✅ **Localization prep** - Clean content before translation
+- ✅ **Accessibility** - Remove non-inclusive language
+
+## 🔒 Security & Permissions
+
+The workflow requires these permissions:
+- `contents: read` - Read repository files
+- `pull-requests: write` - Post comments on PRs
+- `issues: write` - Create issues
+
+Uses `GITHUB_TOKEN` automatically - no secrets needed!
+
+## 📈 Branch Protection
+
+Recommended: Require the "Content Validation" check to pass before merging
+
+**Setup:**
+1. Go to Settings → Branches
+2. Add rule for `main` branch
+3. Check "Require status checks to pass"
+4. Select "Content Validation"
+
+## 🤝 Contributing
+
+Issues and PRs welcome! Common additions:
+
+- More spelling words
+- Additional validation rules
+- Language-specific checks
+- Integration with external APIs (Grammarly, LanguageTool)
+
+## 📄 License
 
 MIT
 
+## 🙏 Credits
+
+Inspired by [figma-content-scraper](https://github.com/cwiza/figma-content-scraper)
+
 ---
 
-**Enjoy better content quality!**
+**Questions?** Open an issue at https://github.com/cwiza/content-checker/issues
