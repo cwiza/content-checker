@@ -258,10 +258,10 @@ async function main() {
 
     // Set outputs (new GitHub Actions syntax)
     const hasCritical = allIssues.some(i => i.severity === 'critical' || i.severity === 'high');
-    const fs = require('fs');
     const outputFile = process.env.GITHUB_OUTPUT;
     if (outputFile) {
-        fs.appendFileSync(outputFile, `has_issues=${allIssues.length > 0}\n`);
+        const fs = require('fs');
+        fs.appendFileSync(outputFile, `has_issues=${allIssues.length > 0}\\n`);
         fs.appendFileSync(outputFile, `has_critical=${hasCritical}\n`);
     }
 
