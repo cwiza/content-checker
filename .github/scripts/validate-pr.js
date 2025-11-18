@@ -248,10 +248,14 @@ async function main() {
     fs.writeFileSync('validation-report.md', report);
     fs.writeFileSync('validation-issues.json', JSON.stringify(allIssues, null, 2));
 
-    // Set outputs
+    // Set outputs (new GitHub Actions syntax)
     const hasCritical = allIssues.some(i => i.severity === 'critical' || i.severity === 'high');
-    console.log(`::set-output name=has_issues::${allIssues.length > 0}`);
-    console.log(`::set-output name=has_critical::${hasCritical}`);
+    const fs = require('fs');
+    const outputFile = process.env.GITHUB_OUTPUT;
+    if (outputFile) {
+        fs.appendFileSync(outputFile, `has_issues=${allIssues.length > 0}\n`);
+        fs.appendFileSync(outputFile, `has_critical=${hasCritical}\n`);
+    }
 
     // Exit with error if critical issues found
     if (hasCritical) {
