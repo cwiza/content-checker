@@ -1,0 +1,46 @@
+name: Weekly Content Audit
+
+on:
+  schedule:
+    # Run every Monday at 9am UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  audit-all-content:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate all content files
+        run: |
+          find . -type f \( -name "*.md" -o -name "*.txt" -o -name "*.json" \) \
+            -not -path "*/node_modules/*" \
+            -not -path "*/.git/*" \
+            | xargs -I {} node .github/scripts/validate-file.js {}
+
+      - name: Create summary issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('audit-summary.md', 'utf8');
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📋 Weekly Content Audit - ${new Date().toISOString().split('T')[0]}`,
+              body: summary,
+              labels: ['content-audit', 'maintenance']
+            });

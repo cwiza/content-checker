@@ -1,0 +1,91 @@
+name: Content Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.md'
+      - '**.txt'
+      - '**.json'
+      - '**.yml'
+      - '**.yaml'
+
+jobs:
+  validate-content:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build validator
+        run: npm run compile
+
+      - name: Run content validation
+        id: validate
+        run: node .github/scripts/validate-pr.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
+      - name: Comment on PR
+        if: steps.validate.outputs.has_issues == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('validation-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Create issues for errors
+        if: steps.validate.outputs.has_critical == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issues = JSON.parse(fs.readFileSync('validation-issues.json', 'utf8'));
+            
+            for (const issue of issues) {
+              if (issue.severity === 'critical' || issue.severity === 'high') {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `[Content] ${issue.type}: ${issue.file}`,
+                  body: `## Content Validation Issue\n\n` +
+                        `**File:** ${issue.file}\n` +
+                        `**Line:** ${issue.line}\n` +
+                        `**Severity:** ${issue.severity.toUpperCase()}\n` +
+                        `**Type:** ${issue.type}\n\n` +
+                        `### Message\n${issue.message}\n\n` +
+                        (issue.suggestion ? `### Suggestion\n${issue.suggestion}\n\n` : '') +
+                        `**Related PR:** #${context.issue.number}`,
+                  labels: ['content-validation', `severity-${issue.severity}`, issue.type]
+                });
+              }
+            }
+
+      - name: Fail on critical issues
+        if: steps.validate.outputs.has_critical == 'true'
+        run: |
+          echo "Critical content issues found. Please fix before merging."
+          exit 1
