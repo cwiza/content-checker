@@ -31,20 +31,25 @@ jobs:
 
       - name: Run content validation
         id: validate
+        continue-on-error: true
         run: node .github/scripts/validate-pr.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Comment on PR
-        if: steps.validate.outputs.has_issues == 'true'
+        if: hashFiles('validation-report.md') != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync('validation-report.md')) {
+              console.log('No validation report found');
+              return;
+            }
             const report = fs.readFileSync('validation-report.md', 'utf8');
             
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -52,11 +57,15 @@ jobs:
             });
 
       - name: Create issues for errors
-        if: steps.validate.outputs.has_critical == 'true'
+        if: hashFiles('validation-issues.json') != ''
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync('validation-issues.json')) {
+              console.log('No issues file found');
+              return;
+            }
             const issues = JSON.parse(fs.readFileSync('validation-issues.json', 'utf8'));
             
             for (const issue of issues) {
@@ -79,7 +88,7 @@ jobs:
             }
 
       - name: Fail on critical issues
-        if: steps.validate.outputs.has_critical == 'true'
+        if: steps.validate.outcome == 'failure'
         run: |
           echo "Critical content issues found. Please fix before merging."
           exit 1
