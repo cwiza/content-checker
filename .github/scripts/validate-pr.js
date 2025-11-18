@@ -200,18 +200,26 @@ class ContentValidator {
 async function main() {
     const prNumber = process.env.PR_NUMBER;
     
-    // Get changed files - try different git commands based on context
+    // Get changed files - use git diff against main branch
     let changedFiles = [];
     
     try {
-        // Try PR context first
-        changedFiles = execSync('git diff --name-only origin/main...HEAD 2>/dev/null || git diff --name-only HEAD~1...HEAD 2>/dev/null || git ls-files "*.md" "*.txt" "*.json" "*.yml" "*.yaml"', { encoding: 'utf8' })
+        // In GitHub Actions, we need to fetch the base branch first
+        console.log('Fetching base branch...');
+        execSync('git fetch origin main:main', { encoding: 'utf8', stdio: 'inherit' });
+        
+        // Get files changed compared to main
+        const diffOutput = execSync('git diff --name-only main...HEAD', { encoding: 'utf8' });
+        changedFiles = diffOutput
             .trim()
             .split('\n')
             .filter(file => file && file.length > 0);
+        
+        console.log('Changed files:', changedFiles);
     } catch (error) {
+        console.error('Error getting changed files:', error.message);
         // Fallback: validate all text files in repo
-        console.log('Could not get changed files, validating all text files...');
+        console.log('Fallback: validating all text files...');
         const findCmd = 'find . -type f \\( -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" \\) -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/dist/*"';
         changedFiles = execSync(findCmd, { encoding: 'utf8' })
             .trim()
@@ -226,7 +234,7 @@ async function main() {
         return textExtensions.some(ext => file.toLowerCase().endsWith(ext));
     });
 
-    console.log(`Validating ${changedFiles.length} changed files...`);
+    console.log(`Validating ${changedFiles.length} files:`, changedFiles);
 
     const validator = new ContentValidator();
     const allIssues = [];
