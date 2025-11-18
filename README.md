@@ -200,16 +200,7 @@ Issues and pull requests welcome! This tool is useful for:
 - Accessibility teams checking clarity
 - Localization teams preparing translations
 
-## Roadmap
 
-- [ ] Azure OpenAI integration for advanced content analysis
-- [ ] Custom rule creation UI
-- [ ] Bulk PR validation
-- [ ] Integration with CI/CD pipelines
-- [ ] Support for more file types
-- [ ] Advanced grammar checking with LLMs
-- [ ] Content style guide enforcement
-- [ ] Terminology consistency checking
 
 ## License
 
