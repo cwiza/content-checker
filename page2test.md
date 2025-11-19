@@ -11,3 +11,9 @@ Mrs. Anderson thinks the calender is wrong. We untill now have been using the ol
 FIXME: Update this section with real data instead of lorem ipsum placeholder text.
 
 Prof. Martinez said the goverment regulations are changing next month. We should of prepared earlier, but we where busy with other things.
+
+## New Section Added for Testing
+
+Ms. Wilson recieved the e mail from teh vendor yesterday. We beleive this could of been avoided if we had better communication. TODO: Schedule meeting with stakeholders.
+
+The begining of next quarter will be challenging. We need to accomodate thier requests and make sure noone is left out.
