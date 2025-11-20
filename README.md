@@ -4,7 +4,8 @@ Automated content validation for GitHub Pull Requests via GitHub Actions. Detect
 
 ## Features
 
-- ✅ **Spell checking** - Common misspellings detected (teh→the, recieve→receive, etc.)
+- ✅ **Spell checking** - 120+ common misspellings (teh→the, recieve→receive, wierd→weird, etc.)
+- ✅ **Spacing errors** - Catches "e mail"→email, "web site"→website, "data base"→database
 - ✅ **Grammar validation** - "should of" → "should have", "could of" → "could have"
 - ✅ **Honorific detection** - Flags Mr., Mrs., Ms., Dr., Prof., Sr., Jr. for inclusive content
 - ✅ **Placeholder detection** - Finds TODO, FIXME, TBD, lorem ipsum, [brackets], {{mustache}}
@@ -45,14 +46,17 @@ The validation workflow runs automatically on pull requests:
 - Posts: Comment on PR with summary and links to issues
 
 **Validation Rules:**
-- **Spelling**: Common misspellings including:
-  - teh → the
-  - recieve → receive
-  - seperate → separate
-  - definately → definitely
-  - accomodate → accommodate
-  - occured → occurred
-  - beleive → believe
+- **Spelling**: 120+ common misspellings including:
+  - Common typos: teh → the, taht → that, thier → their
+  - ie/ei confusion: wierd → weird, peice → piece, recieve → receive
+  - Double letters: occassion → occasion, embarass → embarrass
+  - -ance/-ence: independance → independence, appearence → appearance
+  - Compound words: alot → a lot, everytime → every time
+- **Spacing errors**:
+  - e mail → email
+  - web site → website
+  - data base → database
+  - on line → online
   - And more...
 - **Grammar**: 
   - "should of" → "should have"
