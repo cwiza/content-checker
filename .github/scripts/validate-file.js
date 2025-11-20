@@ -78,9 +78,13 @@ class ContentValidator {
     checkSpelling(text, ctx) {
         const results = [];
         const commonMisspellings = {
+            // Common typos
             'teh': 'the',
+            'taht': 'that',
+            'thier': 'their',
             'recieve': 'receive',
             'occured': 'occurred',
+            'occuring': 'occurring',
             'seperate': 'separate',
             'definately': 'definitely',
             'accomodate': 'accommodate',
@@ -93,8 +97,157 @@ class ContentValidator {
             'sucessful': 'successful',
             'begining': 'beginning',
             'fring': 'firing',
-            'ahd': 'and'
+            'ahd': 'and',
+            'adn': 'and',
+            'nad': 'and',
+            'tiem': 'time',
+            'freind': 'friend',
+            'freinds': 'friends',
+            
+            // ie/ei confusion
+            'wierd': 'weird',
+            'peice': 'piece',
+            'breif': 'brief',
+            'cheif': 'chief',
+            'beleif': 'belief',
+            'reciept': 'receipt',
+            'decieve': 'deceive',
+            'seize': 'seize',
+            'nieghbor': 'neighbor',
+            'feild': 'field',
+            'yeild': 'yield',
+            'preist': 'priest',
+            'seige': 'siege',
+            'theif': 'thief',
+            
+            // Double letters
+            'occassion': 'occasion',
+            'occurence': 'occurrence',
+            'embarass': 'embarrass',
+            'harrass': 'harass',
+            'skillful': 'skillful',
+            'fullfil': 'fulfill',
+            'untill': 'until',
+            'comming': 'coming',
+            'runing': 'running',
+            'occured': 'occurred',
+            
+            // -ance/-ence confusion
+            'independance': 'independence',
+            'dependance': 'dependence',
+            'appearence': 'appearance',
+            'existance': 'existence',
+            'persistance': 'persistence',
+            'resistance': 'resistance',
+            'maintenence': 'maintenance',
+            'experiense': 'experience',
+            'refrence': 'reference',
+            'preferance': 'preference',
+            
+            // Commonly confused words
+            'alot': 'a lot',
+            'everytime': 'every time',
+            'eachother': 'each other',
+            'incase': 'in case',
+            'aswell': 'as well',
+            'infact': 'in fact',
+            'inspite': 'in spite',
+            'neverthless': 'nevertheless',
+            'noone': 'no one',
+            'somtime': 'sometime',
+            'uptill': 'up till',
+            'upto': 'up to',
+            'withthe': 'with the',
+            
+            // Other common misspellings
+            'acheive': 'achieve',
+            'adress': 'address',
+            'agressive': 'aggressive',
+            'arguement': 'argument',
+            'commited': 'committed',
+            'concious': 'conscious',
+            'consious': 'conscious',
+            'dissapear': 'disappear',
+            'enviroment': 'environment',
+            'exsist': 'exist',
+            'existance': 'existence',
+            'foriegn': 'foreign',
+            'grammer': 'grammar',
+            'heigth': 'height',
+            'hieght': 'height',
+            'ignorence': 'ignorance',
+            'immitate': 'imitate',
+            'independant': 'independent',
+            'knowlege': 'knowledge',
+            'liason': 'liaison',
+            'libary': 'library',
+            'lisence': 'license',
+            'maintainance': 'maintenance',
+            'millenium': 'millennium',
+            'minature': 'miniature',
+            'mischevious': 'mischievous',
+            'neccessary': 'necessary',
+            'noticable': 'noticeable',
+            'occassion': 'occasion',
+            'parliamant': 'parliament',
+            'perseverence': 'perseverance',
+            'personell': 'personnel',
+            'posession': 'possession',
+            'prefered': 'preferred',
+            'priviledge': 'privilege',
+            'probly': 'probably',
+            'publically': 'publicly',
+            'reccomend': 'recommend',
+            'refered': 'referred',
+            'relevent': 'relevant',
+            'religous': 'religious',
+            'responsability': 'responsibility',
+            'rythm': 'rhythm',
+            'sciense': 'science',
+            'secratary': 'secretary',
+            'similer': 'similar',
+            'sincerly': 'sincerely',
+            'strengh': 'strength',
+            'sufficent': 'sufficient',
+            'supercede': 'supersede',
+            'surprize': 'surprise',
+            'temperture': 'temperature',
+            'tommorrow': 'tomorrow',
+            'tounge': 'tongue',
+            'truely': 'truly',
+            'unforseen': 'unforeseen',
+            'unfortunatly': 'unfortunately',
+            'useable': 'usable',
+            'vaccum': 'vacuum',
+            'visable': 'visible',
+            'wether': 'whether',
+            'withold': 'withhold',
+            'writting': 'writing'
         };
+
+        // Check for spacing issues in common phrases
+        const spacingIssues = [
+            { pattern: /\be\s+mail\b/gi, correct: 'email', word: 'e mail' },
+            { pattern: /\bweb\s+site\b/gi, correct: 'website', word: 'web site' },
+            { pattern: /\bon\s+line\b/gi, correct: 'online', word: 'on line' },
+            { pattern: /\bdata\s+base\b/gi, correct: 'database', word: 'data base' },
+            { pattern: /\bany\s+one\b/gi, correct: 'anyone', word: 'any one' },
+            { pattern: /\bany\s+where\b/gi, correct: 'anywhere', word: 'any where' },
+            { pattern: /\bany\s+way\b/gi, correct: 'anyway', word: 'any way' },
+            { pattern: /\bsome\s+one\b/gi, correct: 'someone', word: 'some one' },
+            { pattern: /\bsome\s+where\b/gi, correct: 'somewhere', word: 'some where' },
+            { pattern: /\bsome\s+times\b/gi, correct: 'sometimes', word: 'some times' }
+        ];
+
+        for (const issue of spacingIssues) {
+            if (issue.pattern.test(text)) {
+                results.push({
+                    message: `Spacing error: "${issue.word}"`,
+                    suggestion: `Should be "${issue.correct}"`,
+                    line: ctx.lineNumber
+                });
+            }
+        }
 
         const words = text.match(/\b[a-zA-Z]+\b/g) || [];
         
