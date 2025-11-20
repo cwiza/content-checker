@@ -1,0 +1,38 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "btnshadow",
+    "headerimg",
+    "footerlink",
+    "contentchecker",
+    "cwiza",
+    "vsix",
+    "esbuild",
+    "vsce",
+    "github",
+    "typescript"
+  ],
+  "ignoreWords": [],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "*.min.js",
+    "package-lock.json",
+    ".git/**"
+  ],
+  "ignoreRegExpList": [
+    "/\\b[A-Z]{2,}\\b/g",
+    "/0x[0-9a-fA-F]+/g",
+    "/\\b\\d+\\.\\d+\\.\\d+\\b/g"
+  ],
+  "enabledLanguageIds": [
+    "markdown",
+    "text",
+    "plaintext",
+    "javascript",
+    "typescript",
+    "json",
+    "yaml"
+  ]
+}
