@@ -47,9 +47,6 @@ jobs:
             
             core.setOutput('filename', filename);
             core.info(`Filename: ${filename}`);
-            
-            core.setOutput('filename', filename);
-            core.setOutput('issue_body', issue.data.body);
 
       - name: Apply auto-fixes
         env:
