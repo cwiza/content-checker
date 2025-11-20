@@ -4,11 +4,11 @@ Automated content validation for GitHub Pull Requests via GitHub Actions. Detect
 
 ## Features
 
-- ✅ **Spell checking** - 100+ common misspellings detected
-- ✅ **Grammar validation** - "should of" → "should have", etc.
-- ✅ **Honorific detection** - Flags Mr., Mrs., Dr., etc. for inclusive content
-- ✅ **Placeholder detection** - Finds TODO, FIXME, lorem ipsum
-- ✅ **Code-aware** - Skips camelCase, kebab-case, JSON, code blocks
+- ✅ **Spell checking** - Common misspellings detected (teh→the, recieve→receive, etc.)
+- ✅ **Grammar validation** - "should of" → "should have", "could of" → "could have"
+- ✅ **Honorific detection** - Flags Mr., Mrs., Ms., Dr., Prof., Sr., Jr. for inclusive content
+- ✅ **Placeholder detection** - Finds TODO, FIXME, TBD, lorem ipsum, [brackets], {{mustache}}
+- ✅ **Capitalization check** - Ensures sentences start with capital letters
 - ✅ **Automatic PR validation** - Runs on every pull request
 - ✅ **Issue creation** - Groups problems by file
 - ✅ **PR blocking** - Prevents merge until validation passes
@@ -45,10 +45,28 @@ The validation workflow runs automatically on pull requests:
 - Posts: Comment on PR with summary and links to issues
 
 **Validation Rules:**
-- **Spelling**: 100+ common misspellings (recieve→receive, teh→the, etc.)
-- **Grammar**: "should of"→"should have", "could of"→"could have"
-- **Honorifics**: Mr., Mrs., Dr., Prof., Ms. (for inclusive content)
-- **Placeholders**: TODO, FIXME, TBD, lorem ipsum, [placeholder]
+- **Spelling**: Common misspellings including:
+  - teh → the
+  - recieve → receive
+  - seperate → separate
+  - definately → definitely
+  - accomodate → accommodate
+  - occured → occurred
+  - beleive → believe
+  - And more...
+- **Grammar**: 
+  - "should of" → "should have"
+  - "could of" → "could have"
+  - "would of" → "would have"
+  - "your welcome" → "you're welcome"
+- **Honorifics**: Mr., Mrs., Ms., Dr., Prof., Sr., Jr. (flagged for inclusive content)
+- **Placeholders**: 
+  - TODO, FIXME, TBD
+  - lorem ipsum, dolor sit amet
+  - [brackets], {{mustache templates}}
+  - placeholder text
+  - xxx markers
+- **Capitalization**: Sentences must start with capital letters
 
 **Code-Aware:**
 - Skips code blocks (```, ~~~)
@@ -76,23 +94,28 @@ When validation finds issues, it creates GitHub issues like:
 Found 15 validation issues:
 
 ### Spelling Errors (8)
-- Line 12: "recieve" should be "receive"
-- Line 45: "teh" should be "the"
-- Line 67: "seperate" should be "separate"
+- Line 12: Possible spelling error: "recieve" - Did you mean "receive"?
+- Line 45: Possible spelling error: "teh" - Did you mean "the"?
+- Line 67: Possible spelling error: "seperate" - Did you mean "separate"?
+- Line 89: Possible spelling error: "definately" - Did you mean "definitely"?
 ...
 
 ### Grammar Issues (3)  
-- Line 23: "should of" → "should have"
-- Line 89: "could of" → "could have"
+- Line 23: Grammar issue: Should be "should have"
+- Line 89: Grammar issue: Should be "could have"
+- Line 102: Grammar issue: Should be "you're welcome" (you are)
 
 ### Honorifics (2)
-- Line 34: Remove honorific "Mr."
-- Line 56: Remove honorific "Dr."
+- Line 34: Honorific detected: Mr. - Remove for inclusivity
+- Line 56: Honorific detected: Dr. - Use first name or full name without honorific
 
 ### Placeholders (2)
-- Line 78: TODO found
-- Line 91: FIXME found
+- Line 78: Placeholder text detected: TODO - Replace with actual content
+- Line 91: Placeholder text detected: FIXME - Replace with actual content
 ```
+
+**PR Comment:**
+The workflow also posts a summary comment on your PR with links to all created issues and the validation status.
 
 ## Future Ideas
 
